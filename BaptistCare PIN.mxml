@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MovilizerRequest numResponses="1000" requestTrackingKey="" synchronousResponse="true" systemId="${#Project#QASystemID}" systemPassword="${#Project#QAPassword}" useAutoAcknowledge="true" xmlns="http://movilitas.com/movilizer/v16">
+    
+    <moveletDelete moveletKey="ORTEC_BC_PIN_SEL_v1.1"/>
+    <moveletDelete moveletKey="ORTEC_BC_PIN_ENTRY_v1.1"/>
+   
+    <moveletSet>
+//---------------------------------------------------------------------------------------    
+// Pin Selection Movelet
+//---------------------------------------------------------------------------------------           
+        <movelet encryptionAlgorithm="" filterValue="" icon="112"
+            initialQuestionKey="1" mafAppSpace="" metaMoveletType="NONE"
+            moveletDownloadPriority="0"
+            moveletKey="ORTEC_BC_PIN_SEL_v1.1" moveletKeyExtension=""
+            moveletType="MULTI" moveletVersion="0"
+            namespace="E16QA#E16QA#ORTEC_BC" priority="0"
+            privateNamespace="true" replyUploadPriority="0"
+            syncPriority="NONE" transactional="false"
+            validTillDate="2099-12-31T11:00:00.000Z" visible="true">
+            <question backNavigationAllowed="true" key="1"
+                sortAnswersByClientKey="false"
+                tableOptionsEnabled="true" tableRowDetailsEnabled="true"
+                title="PIN Entry" type="5">
+                <answer action="FULLSYNCSILENT" attributeType="24"
+                    clientKey="1_1" colIndex="0" dummyAnswer="false"
+                    key="#1_1" nextQuestionKey="END"
+                    onScreenValueChangeEventTrigger="SYNCHRONOUS"
+                    position="0" sortAnswerItemsByClientKey="false" timerBasedScreenValueChangeEvent="false">
+                    <text>Enter񍺮�-</text>
+                </answer>
+                <answer action="FULLSYNCSILENT" attributeType="24"
+                    clientKey="1_2" dummyAnswer="false" key="#1_2"
+                    nextQuestionKey="END"
+                    onScreenValueChangeEventTrigger="SYNCHRONOUS"
+                    position="1" sortAnswerItemsByClientKey="false" timerBasedScreenValueChangeEvent="false">
+                    <text>Confirm񍺮�-</text>
+                </answer>
+                <text>Please enter a 4 digit pin</text>
+                <validation position="0" type="ERROR">
+                    <condition>!strEquals($local:pinOne, $local:pinTwo)</condition>
+                    <text>PIN does not match</text>
+                    <matchingAssignment/>
+                </validation>
+                <onEnterAssignment>
+    	// Clear locals 
+		$local:pinOne = null; 
+		$local:pinTwo = null; 
+
+		// Enable just field 1 
+		setAnswerEnabled($answer:'#1_1', '1_1', true); 
+		setAnswerEnabled($answer:'#1_2', '1_2', false); 
+
+		// Set PINs to null 
+		setAnswerValueByClientKey($answer:'#1_1', '1_1', null); 
+		setAnswerValueByClientKey($answer:'#1_2', '1_2', null); 
+
+		// Focus on field 1 
+		focus($answer:'#1_1', '1_1'); 
+		setAnswerRequired($answer:'#1_1', '1_1', true);
+	</onEnterAssignment>
+                <onLeaveOkPrepareAssignment/>
+                <onLeaveOkPersistAssignment>
+    	// Save the PIN 
+		$global:PIN 		= $local:pinTwo; 
+		$global:PINVisible 	= true;
+		$global:PINSelVisible = false;
+	</onLeaveOkPersistAssignment>
+                <onLeaveBackAssignment/>
+                <onScreenValueChangeEvent>function(answerKey, clientKey, value, data)
+{
+	// BLOCK: IDENTIFY TRIGGER
+    if (answerKey == $answer:'#1_1')
+    {
+
+		// If field 1 is 4 characters, enable field 2
+		strLength = length(value);
+        if ( strLength == 4 )
+        {                         
+			$local:pinOne = value;			
+			setAnswerEnabled($answer:'#1_2', '1_2', true);
+			setAnswerEnabled($answer:'#1_1', '1_1', false);
+			focus($answer:'#1_2', '1_2');
+        }
+                    
+	}   
+
+    if (answerKey == $answer:'#1_2')
+    {
+		// If field 2 is 4 characters
+		strLength = length(value);
+        if ( strLength == 4 )
+        {                         
+			$local:pinTwo = value;
+            setAnswerEnabled($answer:'#1_1', '1_1', true);			
+        }
+	}
+}
+</onScreenValueChangeEvent>
+                <onExternalEvent/>
+            </question>
+            <syncDownloadAssignment>
+  	$global:PINSelVisible = true;
+  </syncDownloadAssignment>
+            <name>PIN Selection (Test)</name>
+            <visibleExpression>
+  	$global:PINSelVisible
+  </visibleExpression>
+        </movelet>
+//---------------------------------------------------------------------------------------    
+// Pin Entry Movelet
+//---------------------------------------------------------------------------------------        
+        <movelet encryptionAlgorithm="" filterValue="" icon="112"
+            initialQuestionKey="1" mafAppSpace="" metaMoveletType="NONE"
+            moveletDownloadPriority="0"
+            moveletKey="ORTEC_BC_PIN_ENTRY_v1.1" moveletKeyExtension=""
+            moveletType="MULTI" moveletVersion="0"
+            namespace="E16QA#E16QA#ORTEC_BC" priority="0"
+            privateNamespace="true" replyUploadPriority="0"
+            syncPriority="NONE" transactional="false"
+            validTillDate="2099-12-31T11:00:00.000Z" visible="false">
+            <question backNavigationAllowed="true" key="1"
+                sortAnswersByClientKey="false"
+                tableOptionsEnabled="true" tableRowDetailsEnabled="true"
+                title="PIN Authentication" type="5">
+                <answer action="NONE" attributeType="24" clientKey="1_1"
+                    colIndex="0" dummyAnswer="false" key="#1_1"
+                    nextQuestionKey="END"
+                    onScreenValueChangeEventTrigger="ASYNCHRONOUS"
+                    position="0" sortAnswerItemsByClientKey="false" timerBasedScreenValueChangeEvent="true">
+                    <text>PIN񍺮�-</text>
+                </answer>
+                <text>Please enter your 4 digit PIN</text>
+                <validation position="0" type="ERROR">
+                    <condition>$global:PIN != getQuestionValue()</condition>
+                    <text>Incorrect PIN</text>
+                    <matchingAssignment/>
+                </validation>
+                <onEnterAssignment>
+    	focus($answer:'#1_1', '1_1'); 
+		setAnswerRequired($answer:'#1_1', '1_1', true);
+	</onEnterAssignment>
+                <onLeaveOkPrepareAssignment/>
+                <onLeaveOkPersistAssignment>
+    	// Make service planning visible 
+		$global:SPVisible = true; 
+		$global:PINVisible = false;
+		setLoginTimeout($global:TimeOut, $global:udfLogin)
+	</onLeaveOkPersistAssignment>
+                <onLeaveBackAssignment/>
+                <onScreenValueChangeEvent/>
+                <onExternalEvent/>
+            </question>
+    <syncDownloadAssignment>
+  		$global:PINVisible = false;
+  	</syncDownloadAssignment>
+            <moveletStartAssignment>
+	  	
+	  	$global:udfLogin = function()
+	  		{ 
+	  			$global:PINVisible 	= true; 
+	  			$global:SPVisible 	= false; 
+	  		}
+	  		
+  	</moveletStartAssignment>
+            <name>PIN Entry (Test)</name>
+            <visibleExpression>
+  		$global:PINVisible
+  	</visibleExpression>
+        </movelet>
+//--------------------------------------------------------------------------------------- 
+
+    </moveletSet>
+   
+    <moveletAssignment moveletKey="ORTEC_BC_PIN_SEL_v1.1">
+        <participant deviceAddress="${#Project#QAAppGroup}" name="ORTEC_BC" participantKey="ORTEC_BC"/>
+    </moveletAssignment>
+
+    <moveletAssignment moveletKey="ORTEC_BC_PIN_ENTRY_v1.1">
+        <participant deviceAddress="${#Project#QAAppGroup}" name="ORTEC_BC" participantKey="ORTEC_BC"/>
+    </moveletAssignment>
+    
+</MovilizerRequest>

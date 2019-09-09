@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MovilizerRequest numResponses="1000" requestTrackingKey="" synchronousResponse="true" systemId="${#Project#QASystemID}" systemPassword="${#Project#QAPassword}" useAutoAcknowledge="true" xmlns="http://movilitas.com/movilizer/v16">
+    
+    <moveletDelete moveletKey="ORTEC_BC_CONFIG_v1.1"/>
+    <moveletDelete moveletKey="ORTEC_BC_CUST_v1.1"/>
+
+	<moveletSet>
+//---------------------------------------------------------------------------------------    
+        <movelet autoExecuteTimeout="-1" initialQuestionKey="1"
+            metaMoveletType="NONE" moveletKey="ORTEC_BC_CONFIG_v1.1"
+            moveletKeyExtension="" moveletType="MULTI"
+            namespace="E16QA#E16QA#ORTEC_BC" priority="0"
+            privateNamespace="true" syncPriority="NONE"
+            transactional="true"
+            validTillDate="2099-12-31T11:00:00.000Z" visible="false">
+            <question backNavigationAllowed="true" key="1"
+                sortAnswersByClientKey="false" title="New screen" type="41">
+                <answer action="NONE" dummyAnswer="false" key="#1_1"
+                    nextQuestionKey="CANCEL" position="1"/>
+                <text>place</text>
+            </question>
+        <syncDownloadAssignment>
+
+            	// CUSTOMIZATION SCRIPT
+				setCustomizingProperty($customizing:'screen.movelet.table.zebraStriping',  $local:activateTableZebra);
+				setCustomizingProperty($customizing:'screen.movelet.table.row.color.odd',  $local:colorTableRowOdd);
+				setCustomizingProperty($customizing:'screen.movelet.table.row.color.even', $local:colorTableRowEven);
+				setCustomizingProperty($customizing:'option.reset.soft.visible', false);
+			
+			     // Helper Variables
+				$local:activateTableZebra 	= false;
+				$local:colorTableRowOdd   	= '#e6e6e6';
+				$local:colorTableRowEven  	= '#d1d1d1';
+				$global:timezone			= 'GMT+10:00';
+            	$global:SPVisible 	= false;
+				$local:conID 		= -1;
+				$global:range		= 14;			
+				$global:device 		= getDeviceAddress();
+				
+				// Baptist Care Configuration Variables
+				$global:TimeOut 			= 28800;   		// 8 hours
+				$global:Horizon				= 14*86400 ;	// 14 days				
+			
+				// Enable, 5 minute sync
+				setCustomizingProperty($customizing:'option.autosync', 300000);
+				
+			</syncDownloadAssignment>	
+			            
+            <moveletStartAssignment>
+	
+		$local:keyMap = {"screen.header.color.end" : $customizing:"screen.header.color.end";
+		
+"icon.movelet115" : $customizing:"icon.movelet115";
+"icon.movelet116" : $customizing:"icon.movelet116";
+"icon.movelet117" : $customizing:"icon.movelet117";
+"icon.movelet118" : $customizing:"icon.movelet118";
+"icon.movelet119" : $customizing:"icon.movelet119";
+"icon.movelet113" : $customizing:"icon.movelet113";
+"screen.header.text.color" : $customizing:"screen.header.text.color";
+"icon.movelet110" : $customizing:"icon.movelet110";
+"screen.calendar.dayview.enabled" : $customizing:"screen.calendar.dayview.enabled";
+"icon.movelet111" : $customizing:"icon.movelet111";
+"screen.calendar.monthview.appointment.time.text.color" : $customizing:"screen.calendar.monthview.appointment.time.text.color";
+"screen.calendar.weekday.secondary.text.color" : $customizing:"screen.calendar.weekday.secondary.text.color";
+"screen.body.button.text.color" : $customizing:"screen.body.button.text.color";
+"screen.body.edittext.hinttext.color" : $customizing:"screen.body.edittext.hinttext.color";
+"screen.footer.separator.color" : $customizing:"screen.footer.separator.color";
+"screen.calendar.appointment.color" : $customizing:"screen.calendar.appointment.color";
+"screen.calendar.weekview.enabled" : $customizing:"screen.calendar.weekview.enabled";
+"screen.footer.color.end" : $customizing:"screen.footer.color.end";
+"screen.header.separator.color" : $customizing:"screen.header.separator.color";
+"screen.body.question.text.color" : $customizing:"screen.body.question.text.color";
+"screen.footer.color.start" : $customizing:"screen.footer.color.start";
+"icon.mainmenu.background" : $customizing:"icon.mainmenu.background";
+"screen.body.valueinfo.text.color" : $customizing:"screen.body.valueinfo.text.color";
+"icon.movelet112" : $customizing:"icon.movelet112";
+"screen.header.color.start" : $customizing:"screen.header.color.start";
+"screen.body.edittext.text.color" : $customizing:"screen.body.edittext.text.color";
+"screen.footer.text.color" : $customizing:"screen.footer.text.color";
+"screen.body.standard.text.color" : $customizing:"screen.body.standard.text.color";
+"screen.calendar.monthview.enabled" : $customizing:"screen.calendar.monthview.enabled";
+"icon.movelet114" : $customizing:"icon.movelet114";
+"screen.body.sublabel.text.color" : $customizing:"screen.body.sublabel.text.color"};
+
+		configs = listMasterdata($masterdata:23570001:"63b566ad-433a-4524-8dcc-3f1c41d6627a",'config',null,null,null,null,0,10000,1);	
+			
+		for (key :configs)
+		{
+			item = getMasterdata($masterdata:23570001:"63b566ad-433a-4524-8dcc-3f1c41d6627a", key);
+			
+			tmpArray = item['data'];
+
+			if(tmpArray["valuestr"] != null)
+			{
+				if(tmpArray["optionalKey"] == null)
+				{
+					setCustomizingProperty($local:keyMap[key], tmpArray["valuestr"]);
+				}
+				else
+				{
+					setCustomizingProperty($local:keyMap[key], tmpArray["optionalKey"], tmpArray["valuestr"]);
+				}
+			}
+			if(tmpArray["valueint"] != null)
+			{
+				if(tmpArray["optionalKey"] == null)
+				{
+					setCustomizingProperty($local:keyMap[key], parseInt(tmpArray["valueint"], 10));
+				}
+				else
+				{
+					setCustomizingProperty($local:keyMap[key], tmpArray["optionalKey"], parseInt(tmpArray["valueint"], 10));
+				}
+			}
+			if (tmpArray["icon"] != null)
+			{
+				width = getPreferredIconWidth($local:keyMap[key]);
+				icons = tmpArray["icon"];
+				
+				iconWidthDiff = 0;
+				iconKey = "";
+				for(icon :tmpArray["icon"])
+				{
+					iconWidth = parseInt(strReplace(icon, "ICON_", ""), 10);
+					if(width == iconWidth)
+					{
+						iconKey = icon;
+						break;
+					}
+					else
+					{
+						difference = abs(iconWidth - width);
+						if(iconWidthDiff == 0 || iconWidthDiff &gt; difference)
+						{
+							iconWidthDiff = difference;
+							iconKey = icon;
+						}
+					}
+				}
+				
+				if( icons[iconKey] != null)
+				{
+					setCustomizingProperty($local:keyMap[key], icons[iconKey]);
+				}
+			}
+		}
+			</moveletStartAssignment>
+											
+            <name>BaptistCare Config</name>
+            <masterdata orphanTTL="-1"
+                pool="63b566ad-433a-4524-8dcc-3f1c41d6627a" systemId="23570001"/>
+        </movelet>
+//---------------------------------------------------------------------------------------        
+        <movelet autoExecuteTimeout="-1" encryptionAlgorithm=""
+            filterValue="" icon="-1" initialQuestionKey="1"
+            mafAppSpace="" metaMoveletType="NONE"
+            moveletDownloadPriority="0" moveletKey="ORTEC_BC_CUST_v1.1"
+            moveletKeyExtension="" moveletType="DEVICE"
+            moveletVersion="0" namespace="E16QA#E16QA#ORTEC_BC"
+            priority="0" privateNamespace="true" replyUploadPriority="0"
+            syncPriority="TRIGGERSYNCMOVELET" transactional="false"
+            validTillDate="2099-12-31T11:00:00.000Z" visible="false">
+            <question backNavigationAllowed="true" key="1"
+                sortAnswersByClientKey="false"
+                tableOptionsEnabled="true" tableRowDetailsEnabled="true"
+                title="Master Data Assignment" type="41">
+                <answer action="FULLSYNCSILENT" dummyAnswer="true"
+                    key="#1_1" nextQuestionKey="END"
+                    onScreenValueChangeEventTrigger="NONE" position="0"
+                    sortAnswerItemsByClientKey="false" timerBasedScreenValueChangeEvent="false"/>
+                <onEnterAssignment/>
+                <onLeaveOkPrepareAssignment/>
+                <onLeaveOkPersistAssignment>                
+				
+					// Send device address to the cloud so master data can be downloaded
+					arrData['device'] = getDeviceAddress();
+					writeContainer('assignMasterdata', arrData,1);
+					
+				</onLeaveOkPersistAssignment>
+                <onLeaveBackAssignment/>
+            </question>
+            <syncDownloadAssignment>
+	            // Helper Variables		
+				$global:device 		= getDeviceAddress();
+				if ($global:device == '@chris@ohmail.co.nz')
+				{
+					$global:device = '@luuk.weerens@ortec.com';
+				}
+								
+			</syncDownloadAssignment>
+            <name>Master Data Assignment</name>
+        </movelet>
+//---------------------------------------------------------------------------------------        
+	</moveletSet>
+	
+    <moveletAssignment moveletKey="ORTEC_BC_CONFIG_v1.1">
+        <participant deviceAddress="${#Project#QAAppGroup}" participantKey="ORTEC_BC" name="ORTEC_BC"/>         
+    </moveletAssignment>
+    
+    <moveletAssignment moveletKey="ORTEC_BC_CUST_v1.1">
+        <participant deviceAddress="${#Project#QAAppGroup}" participantKey="ORTEC_BC" name="ORTEC_BC"/>         
+    </moveletAssignment>
+        	
+</MovilizerRequest>
